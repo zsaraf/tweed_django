@@ -1,0 +1,173 @@
+html {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+body {
+    position:relative;
+    font-family: "Trebuchet MS", Helvetica, sans-serif;
+    min-height: 100%;
+    padding-bottom: 50px;
+    margin: 0;
+}
+
+textarea {
+    height: 300px;
+    resize: none;
+}
+
+.group_title {
+	border:1px solid red;
+    float:left;
+    width:48%;
+}
+
+.group_detail {
+	border:1px solid magenta;
+    float:right;
+    width:48%;
+}
+
+#user_content {
+	margin: 0 auto;
+	width: 600px;
+	
+}
+
+#content {
+    margin: 0 auto;
+    padding-top: 10px;
+    width: 100%;
+}
+
+#header {
+    width: 100%;
+    background: #F4806E;
+    height: 75px;
+}
+
+#footer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: #F4806E;
+    text-align: center;
+    padding: 1rem;
+    height: 50px;
+}
+
+#header h1 {
+    color: white;
+    height: 75px;
+    line-height: 75px;
+    width: 100%;
+}
+
+#unread_messages {
+    margin: 5px;
+}
+
+#unread_messages b {
+    color: red;
+}
+
+.emphasized {
+    color: red;
+}
+
+.main_form {
+    text-align: center;
+    font-size: 20px;
+    margin: 0 auto;
+    margin-top: 50px;
+    width: 400px;
+}
+
+textarea, input[type='text'], input [type='submit'] {
+    border: 3px solid #cccccc;
+    padding: 5px;
+    width: 384px;
+    font-size: 16px;
+}
+
+input[type='submit'] {
+    background: #F4806E;
+    border: none;
+    color: white;
+    padding: 10px;
+    font-size: 20px;
+    width: 280px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+
+}
+
+#update_filter {
+	width: 100px;
+	font-size: 16px;
+}
+
+#uploads {
+    display: inline-block;
+    float: right;
+    width: 50%;
+}
+
+#referrals {
+    display: inline-block;
+    width: 50%;
+}
+
+a {
+    padding-right: 30px;
+    padding-right: 30px;
+    color: white;
+    text-decoration: none;
+}
+
+
+h1, h2 {
+    text-align: center;
+    color: #666666;
+}
+
+ul {
+    list-style-type: none;
+    margin:15px;
+    padding:0;
+    background: #f5f5f5;
+}
+ul li {
+    position: relative;
+    color: #F4806E;
+    font-family: helvetica;
+    padding:2% 5%;
+    border-bottom: 1px solid white;
+}
+
+ul li:last-child { 
+    border-bottom:none;
+}
+
+.leader_list ul li:first-child {
+    background: #F4806E;
+    color: white;
+}
+
+.count {
+    display: inline-block;
+    float: right;
+    font-weight: bold;
+}
+
+.descriptor {
+    font-weight: bold;
+    display: inline-block;
+}

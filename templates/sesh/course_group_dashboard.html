@@ -1,0 +1,69 @@
+{% load staticfiles %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Course Groups</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'sesh/course_group_style.css' %}">
+</head>
+<body>
+
+<div id='content'>
+
+  <div id='header'>
+    <h1>course group dashboard</h1>
+  </div>
+
+  <div id='general_stats'>
+    <p>{{ num_groups }} Course Groups</p>
+    <p>{{ num_lonely_groups }} Ghost Towns </p>
+  </div>
+
+  <div id='filter_div'>
+    <form id='filter_form' method='POST'>
+      {% csrf_token %}
+        {% if form.is_valid %}
+          <p>Success!</p>
+        {% endif %}
+        <div id='filter_selection'>
+          <p>School Id (enter 0 for all schools):</p>
+          {{ filter_form.school_id }}
+          <p>Filter by:</p>
+          {{ filter_form.filter_type }}
+        </div>
+        <input type='submit' name='update_filter' id='update_filter' value="filter">
+    </form>
+  </div>
+
+  <div class='divider'>
+    <ul>
+      {% for group in course_groups %}
+        <li>
+          <div class='group_title'>
+            <p>#{{ group.id }}</p>
+            <p>{{ group.school_name }}  -  {{ group.course_name }}  -  {{ group.professor_name }}</p>
+          </div>
+          <div class='group_detail'>
+    	    <p><b>Enrollement:</b> {{ group.num_students }}</p>
+            <p><b>Total Messages:</b> {{ group.num_messages }}</p>
+            <p><b>Total Uploads:</b> {{ group.num_uploads }}</p>
+            <p><b>Date Created:</b> {{ group.timestamp }}</p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>    
+  </div>
+
+</div>
+
+<div id='footer'>
+   <a href="'/django/tools/leaderboard/'">leaderboard</a>
+   <a href="'/django/tools/dashboard/'">course group dashboard</a>
+   <a href="'/django/tools/dashboard/'">stats</a>
+</div>
+
+
+</body>
+
+</html>
