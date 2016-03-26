@@ -135,7 +135,7 @@ WSGI_APPLICATION = 'sesh.wsgi.application'
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'apps.account.AuthenticationBackend.SeshAuthentication',
+        'apps.account.AuthenticationBackend.TweedAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication'
     ),
