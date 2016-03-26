@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import list_route
+from rest_framework import exceptions
 from .models import *
 from .serializers import *
 from django.conf import settings
@@ -21,6 +22,8 @@ class TokenViewSet(viewsets.ModelViewSet):
     def create(self, request):
         '''
         Create a new Token
+        Method: POST
+        Args: None
         '''
         return Response(TokenSerializer(request.user.token).data)
 
@@ -35,9 +38,26 @@ class FollowViewSet(viewsets.ModelViewSet):
     serializer_class = FollowSerializer
 
     @list_route(methods=['POST'])
+    def check_user(self, request):
+        '''
+        Check if screen_name is valid
+        Method: POST
+        Args: string screen_name
+        '''
+        screen_name = request.data.get('screen_name', None)
+        try:
+            api.GetUser(screen_name=screen_name)
+            return Response()
+        except twitter.TwitterError:
+            # not a valid twitter screen_name
+            raise exceptions.NotFound()
+
+    @list_route(methods=['POST'])
     def refresh_tweets(self, request):
         '''
         Refresh twitter data from followees
+        Method: POST
+        Args: None
         '''
         follows = Follow.objects.filter(user=request.user)
         tweets = []
@@ -51,6 +71,15 @@ class FollowViewSet(viewsets.ModelViewSet):
     def create(self, request):
         '''
         Follow a new batch of users
+        Method: POST
+        Args: JSON object in following format
+        {
+            "additions": [{
+                "screen_name": "{example_screen_name}"
+            }, {
+                "screen_name": "{example_screen_name_2}"
+            }]
+        }
         '''
         if 'additions' not in request.data:
             return Response()
