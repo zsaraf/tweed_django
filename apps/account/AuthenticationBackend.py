@@ -12,12 +12,13 @@ class TweedAuthentication(authentication.BaseAuthentication):
             token = Token.objects.generate_new_token()
             user = User.objects.create(token=token)
 
-        try:
-            # user has a token already, just fetch existing user object
-            user = User.objects.get(token=token)
-        except User.DoesNotExist:
-            raise exceptions.AuthenticationFailed('No such user')
-        except Token.DoesNotExist:
-            raise exceptions.AuthenticationFailed('Invalid token')
+        else:
+            try:
+                # user has a token already, just fetch existing user object
+                user = User.objects.get(token=token)
+            except User.DoesNotExist:
+                raise exceptions.AuthenticationFailed('No such user')
+            except Token.DoesNotExist:
+                raise exceptions.AuthenticationFailed('Invalid token')
 
         return (user, token)
