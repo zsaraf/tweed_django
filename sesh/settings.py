@@ -21,24 +21,13 @@ SERVER_NAME = 'seshtutoring'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
-# Slack Integration - for API tips see https://github.com/os/slacker
-
-# Below is the prod (Sesh) slack bot
-SLACK_BOT_TOKEN = 'xoxb-18843597536-6nv8LjUVidq2oTtkT0qAQ5OY'
-
-# Below is the dev (Sesh) slack channel
-SLACK_CHANNEL = '#sesh_all'
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'l%rjm^+u1m_k59lmah+052v!)*4&^mxn7&+y$f6q)tfikpb#$e'
-
-# STRIPE KEY
-STRIPE_API_KEY = 'sk_live_71u3DPdgpHfGhNHiYzEVb2jC'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.cinchtutoring.com', 'cinchtutoring.com', 'localhost', 'www.seshtutoring.com', 'seshtutoring.com', '54.201.37.165']
+ALLOWED_HOSTS = ['www.cinchtutoring.com', 'cinchtutoring.com', 'localhost', 'www.seshtutoring.com', 'seshtutoring.com', '192.168.1.*']
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -67,10 +56,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
 )
-
-# FILE_UPLOAD_HANDLERS = (
-#     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
-# )
 
 ROOT_URLCONF = 'sesh.urls'
 
@@ -135,11 +120,10 @@ WSGI_APPLICATION = 'sesh.wsgi.application'
 
 # REST FRAMEWORK
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'apps.account.AuthenticationBackend.TweedAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+	'apps.account.AuthenticationBackend.TweedAuthentication',
         'rest_framework.authentication.SessionAuthentication'
-    ),
+    ],
     'PAGE_SIZE': 10
 }
 
@@ -157,14 +141,12 @@ DATABASES = {
 }
 
 
-AWS_ACCESS_KEY_ID = 'AKIAIIP5DJ2KQYHRULPA'  # Root access key
-AWS_SECRET_ACCESS_KEY = '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'  # Root secret access key
-AWS_STORAGE_BUCKET_NAME = 'sesh-tutoring-prod'
-S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+# Twitter API access tokens
+CONSUMER_KEY = 'quQSMcgMwkVHYXwv3PAN38uWh'
+CONSUMER_SECRET = 'DnY3DAYiE4oyoYd0TMo5eFtw0eYWfn2w0I0p8WmRl6gpMGlaml'
+ACCESS_TOKEN = '713485065590874114-nJpb1sUcVAF4MNl3qdJL6upow9EX9Ra'
+ACCESS_SECRET = 'wRXRACArLqYruaBcR1q5cLQ9cvTzP3O9e0eVNtvWptGOL'
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.8/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -177,8 +159,9 @@ USE_L10N = True
 USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+

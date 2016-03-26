@@ -5,6 +5,7 @@ from apps.account import views
 router = routers.DefaultRouter()
 router.register(r'follows', views.FollowViewSet)
 router.register(r'users', views.UserViewSet)
+router.register(r'tokens', views.TokenViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls))

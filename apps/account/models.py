@@ -13,7 +13,7 @@ class Token(models.Model):
 
 
 class User(models.Model):
-    token = models.CharField(max_length=100)
+    token = models.OneToOneField(Token)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -23,7 +23,8 @@ class User(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(User)
-    twitter_handle = models.CharField(max_length=20)
+    screen_name = models.CharField(max_length=20)
+    last_id_seen = models.IntegerField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
