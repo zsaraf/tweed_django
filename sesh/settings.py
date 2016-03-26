@@ -36,9 +36,9 @@ SECRET_KEY = 'l%rjm^+u1m_k59lmah+052v!)*4&^mxn7&+y$f6q)tfikpb#$e'
 STRIPE_API_KEY = 'sk_live_71u3DPdgpHfGhNHiYzEVb2jC'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['www.cinchtutoring.com', 'cinchtutoring.com', 'localhost', 'www.seshtutoring.com', 'seshtutoring.com', '192.168.1.11']
+ALLOWED_HOSTS = ['www.cinchtutoring.com', 'cinchtutoring.com', 'localhost', 'www.seshtutoring.com', 'seshtutoring.com', '54.201.37.165']
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'apps.account',
     'storages'
 )
 
