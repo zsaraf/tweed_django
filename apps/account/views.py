@@ -3,6 +3,11 @@ from .models import *
 from .serializers import *
 
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
 class FollowViewSet(viewsets.ModelViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
@@ -11,3 +16,4 @@ class FollowViewSet(viewsets.ModelViewSet):
         '''
         Follow a new batch of users
         '''
+        return Response()
