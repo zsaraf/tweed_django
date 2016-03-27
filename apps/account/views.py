@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import list_route
 from rest_framework import exceptions
 from .models import *
-from .feed import Tweet, TwitterUser
+from .feed import Tweet, TwitterUser, Feed
 from .serializers import *
 from django.conf import settings
 import twitter
@@ -41,9 +41,12 @@ class UserViewSet(viewsets.ModelViewSet):
         Args: None
         '''
         follows = Follow.objects.filter(user=request.user)
-        tweets = []
+        screen_names = []
+        feed = Feed()
 
         for follow in follows:
+            tweets = []
+            screen_names.append(follow.screen_name)
             try:
                 if follow.last_id_seen is None:
                     # first pull from timeline, include count instead of since_id
@@ -52,11 +55,15 @@ class UserViewSet(viewsets.ModelViewSet):
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
 
                 if len(timeline) > 0:
+                    # convert to container Tweet object and identify newest Tweet
                     max_id = follow.last_id_seen
                     for t in timeline:
-                        tweets.append(Tweet(id=t.id, text=t.text))
+                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at))
                         if t.id > max_id:
                             max_id = t.id
+
+                    # add this TwitterUsers twitter stream to feed object
+                    feed.add_stream(tweets)
 
                     # update follow object with new last tweet id that they've seen
                     follow.last_id_seen = max_id
@@ -64,7 +71,16 @@ class UserViewSet(viewsets.ModelViewSet):
             except twitter.TwitterError:
                 pass
 
-        return Response(TweetSerializer(tweets, many=True).data)
+        try:
+            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
+            users = [TwitterUser(u) for u in api.UsersLookup(screen_name=screen_names)]
+            feed.add_users(users)
+
+        except twitter.TwitterError:
+            feed.add_users(None)
+
+        feed.merge_streams()
+        return Response(FeedSerializer(feed).data)
 
 
 class FollowViewSet(viewsets.ModelViewSet):

@@ -3,9 +3,10 @@ class Tweet(object):
     Container object to facilitate working with Tweets
     '''
 
-    def __init__(self, id, text):
+    def __init__(self, id, text, created_at):
         self.id = id
         self.text = text
+        self.created_at = created_at
 
 
 class TwitterUser(object):
@@ -29,3 +30,18 @@ class Feed(object):
     '''
     Container object to facilitate working with a feed comprised of Tweets from multiple TwitterUsers
     '''
+
+    def __init__(self):
+        self.tweets = []
+        self.twitter_users = []
+
+    def add_stream(self, stream):
+        if stream is not None:
+            self.tweets.extend(stream)
+
+    def add_users(self, users):
+        if users is not None:
+            self.twitter_users.extend(users)
+
+    def merge_streams(self):
+        self.tweets.sort(key=lambda t: t.id, reverse=True)
