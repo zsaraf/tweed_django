@@ -61,7 +61,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     # update follow object with new last tweet id that they've seen
                     follow.last_id_seen = max_id
                     follow.save()
-                    return Response(max_id)
             except twitter.TwitterError:
                 pass
 
