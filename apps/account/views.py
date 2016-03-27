@@ -55,7 +55,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     max_id = follow.last_id_seen
                     for t in timeline:
                         tweets.append(Tweet(id=t.id, text=t.text))
-                        if t.id > follow.last_id_seen:
+                        if t.id > max_id:
                             max_id = t.id
 
                     # update follow object with new last tweet id that they've seen
