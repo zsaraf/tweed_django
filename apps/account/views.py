@@ -62,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     # convert to container Tweet object and identify newest Tweet
                     max_id = follow.last_id_seen
                     for t in timeline:
-                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at, user_id=t.user.id))
+                        tweets.append(Tweet(t))
                         if t.id > max_id:
                             max_id = t.id
 

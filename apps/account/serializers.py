@@ -22,13 +22,6 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
 
 
-class TweetSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    user_id = serializers.IntegerField()
-    text = serializers.CharField(max_length=141)
-    created_at = serializers.CharField(max_length=100)
-
-
 class TwitterUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField(max_length=141)
@@ -41,6 +34,21 @@ class TwitterUserSerializer(serializers.Serializer):
     location = serializers.CharField(max_length=100)
     description = serializers.CharField(max_length=250)
     profile_background_color = serializers.CharField(max_length=250)
+
+
+class OriginalTweetSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    text = serializers.CharField(max_length=141)
+    created_at = serializers.CharField(max_length=100)
+    user = TwitterUserSerializer()
+
+
+class TweetSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
+    text = serializers.CharField(max_length=141)
+    created_at = serializers.CharField(max_length=100)
+    original_tweet = OriginalTweetSerializer()
 
 
 class FeedSerializer(serializers.Serializer):

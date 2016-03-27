@@ -1,15 +1,3 @@
-class Tweet(object):
-    '''
-    Container object to facilitate working with Tweets
-    '''
-
-    def __init__(self, id, text, created_at, user_id):
-        self.id = id
-        self.text = text
-        self.user_id = user_id
-        self.created_at = created_at
-
-
 class TwitterUser(object):
     '''
     Container object to facilitate working with Twitter Users
@@ -27,6 +15,37 @@ class TwitterUser(object):
         self.location = full_api_object.location
         self.description = full_api_object.description
         self.profile_background_color = full_api_object.profile_background_color
+
+
+class OriginalTweet(object):
+    '''
+    Container object to facilitate working with Tweets within Retweets
+    '''
+
+    def __init__(self, retweet_obj):
+        self.id = retweet_obj.id
+        self.text = retweet_obj.text
+        self.created_at = retweet_obj.created_at
+        self.user = TwitterUser(retweet_obj.user)
+
+
+class Tweet(object):
+    '''
+    Container object to facilitate working with Tweets
+    '''
+
+    def __init__(self, api_object):
+        self.id = api_object.id
+        self.text = api_object.text
+        self.created_at = api_object.created_at
+        self.user_id = api_object.user.id
+        self.original_tweet = self.parse_retweet(api_object.retweeted_status)
+
+    def parse_retweet(self, retweet):
+        if retweet is None:
+            return None
+        else:
+            return OriginalTweet(retweet)
 
 
 class Feed(object):
