@@ -4,7 +4,7 @@ from py2neo import Graph, Node, Relationship
 class TwitterGraph():
 
     def __init__(self):
-        self.graph = Graph("http://neo4j:Eabltf1!@localhost:7474/db/data/")
+        self.graph = Graph("http://neo4j:Eabltf1!@54.191.171.209:7474/db/data/")
 
     def add_user(self, user):
         new_user = Node("User", token=user.token.session_id, user_id=user.id)
