@@ -33,30 +33,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-
-class FollowViewSet(viewsets.ModelViewSet):
-    queryset = Follow.objects.all()
-    serializer_class = FollowSerializer
-
     @list_route(methods=['POST'])
-    def check_user(self, request):
+    def refresh(self, request):
         '''
-        Check if screen_name is valid
-        Method: POST
-        Args: string screen_name
-        '''
-        screen_name = request.data.get('screen_name', None)
-        try:
-            api.GetUser(screen_name=screen_name)
-            return Response()
-        except twitter.TwitterError:
-            # not a valid twitter screen_name
-            raise exceptions.NotFound()
-
-    @list_route(methods=['POST'])
-    def refresh_tweets(self, request):
-        '''
-        Refresh twitter data from followees
+        Refresh data for user, including TwitterUser and Tweet objects linked to their followees
         Method: POST
         Args: None
         '''
@@ -78,6 +58,54 @@ class FollowViewSet(viewsets.ModelViewSet):
 
         return Response(TweetSerializer(tweets, many=True).data)
 
+
+class FollowViewSet(viewsets.ModelViewSet):
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+
+    @list_route(methods=['GET'])
+    def get_suggestions(self, request):
+        '''
+        Get suggested TwitterUsers to follow
+        Method: GET
+        Args: none
+        '''
+        suggested_users = []
+        screen_names = ['taylorswift13', 'justinbieber', 'tim_cook', 'BarackObama', 'YouTube', 'rihanna', 'TheEllenShow', 'KimKardashian', 'Cristiano', 'cnnbrk', 'Oprah']
+        try:
+            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
+            users = api.UsersLookup(screen_name=screen_names)
+            for u in users:
+                suggested_users.append(TwitterUserSerializer(TwitterUser(u)).data)
+
+        except twitter.TwitterError:
+            return Response("We're experiencing difficulties, please try again later!", 500)
+
+        # trends = api.GetTrendsWoeid(23424977)
+        # for i in xrange(min(5, len(trends))):
+        #     trend = trends[i]
+        #     trending_tweets = api.GetSearch(term=trend.name, lang='en', result_type='popular')
+        #     for t in trending_tweets:
+        #         if t.user.screen_name not in suggested_users:
+        #             suggested_users[t.user.screen_name] = TwitterUserSerializer(TwitterUser(t.user)).data
+
+        return Response(suggested_users)
+
+    @list_route(methods=['GET'])
+    def check_user(self, request):
+        '''
+        Check if screen_name is valid
+        Method: GET
+        Args: string screen_name
+        '''
+        screen_name = request.data.get('screen_name', None)
+        try:
+            api.GetUser(screen_name=screen_name)
+            return Response()
+        except twitter.TwitterError:
+            # not a valid twitter screen_name
+            raise exceptions.NotFound()
+
     def create(self, request):
         '''
         Follow a new batch of users
@@ -95,11 +123,16 @@ class FollowViewSet(viewsets.ModelViewSet):
             return Response()
 
         new_follows = []
-        for obj in request.data['additions']:
-            try:
-                twitter_user = TwitterUser(api.GetUser(screen_name=obj['screen_name']))
-            except twitter.TwitterError:
-                continue
+        screen_names = request.data['additions']
+
+        try:
+            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
+            users = api.UsersLookup(screen_name=screen_names)
+        except twitter.TwitterError:
+            return Response("Inavlid Twitter username", 500)
+
+        for u in users:
+            twitter_user = TwitterUser(u)
 
             try:
                 Follow.objects.get(screen_name=twitter_user.screen_name, user=request.user)

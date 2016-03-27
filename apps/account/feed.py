@@ -23,3 +23,9 @@ class TwitterUser(object):
         self.location = full_api_object.location
         self.description = full_api_object.description
         self.profile_background_color = full_api_object.profile_background_color
+
+
+class Feed(object):
+    '''
+    Container object to facilitate working with a feed comprised of Tweets from multiple TwitterUsers
+    '''
