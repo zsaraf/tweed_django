@@ -56,4 +56,16 @@ class TwitterGraph():
         if follow_relationship is not None:
             self.graph.delete(follow_relationship)
 
+    def add_retweet(self, screen_name, retweeted_screen_name):
+        twitter_user = self.graph.find_one("TwitterUser", 'screen_name', screen_name)
+        if twitter_user is None:
+            # this shouldn't happen, just for testing while transitioning db
+            self.add_twitter_user(screen_name)
+            twitter_user = self.graph.find_one("TwitterUser", 'screen_name', screen_name)
+
+        self.add_twitter_user(retweeted_screen_name)
+        retweeted_twitter_user = self.graph.find_one("TwitterUser", 'screen_name', retweeted_screen_name)
+
+        retweet_relationship = Relationship(twitter_user, "RETWEETED", retweeted_twitter_user)
+        self.graph.create(retweet_relationship)
 
