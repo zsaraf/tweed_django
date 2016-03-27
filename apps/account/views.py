@@ -62,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     # convert to container Tweet object and identify newest Tweet
                     max_id = follow.last_id_seen
                     for t in timeline:
-                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at, user_id=t.user.id))
+                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at))
                         if t.id > max_id:
                             max_id = t.id
 
@@ -140,36 +140,48 @@ class FollowViewSet(viewsets.ModelViewSet):
             # not a valid twitter screen_name
             raise exceptions.NotFound()
 
-    def create(self, request):
+    @list_route(methods=['POST'])
+    def edit(self, request):
         '''
         Follow a new batch of users
         Method: POST
         Args: JSON object in following format
         {
             "additions": ["screen_name_1", "screen_name_2"]
+            "deletions": ["screen_name_3", "screen_name_4"]
         }
         '''
-        if 'additions' not in request.data:
-            return Response()
+        if 'deletions' in request.data:
 
-        new_follows = []
-        screen_names = request.data['additions']
+            for screen_name in request.data['deletions']:
+                try:
+                    Follow.objects.get(screen_name=screen_name, user=request.user).delete()
+                    twitter_graph.remove_follow(screen_name, request.user)
+                except Follow.DoesNotExist:
+                    pass
 
-        try:
-            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
-            users = api.UsersLookup(screen_name=screen_names)
-        except twitter.TwitterError:
-            return Response("Inavlid Twitter username", 500)
+        if 'additions' in request.data and len(request.data['additions']) > 0:
 
-        for u in users:
-            twitter_user = TwitterUser(u)
+            new_follows = []
+            screen_names = request.data['additions']
 
             try:
-                Follow.objects.get(screen_name=twitter_user.screen_name, user=request.user)
-            except Follow.DoesNotExist:
-                # they are not already following this user, add them
-                Follow.objects.create(screen_name=twitter_user.screen_name, user=request.user)
-                twitter_graph.add_follow(twitter_user.screen_name, request.user.id)
-                new_follows.append(twitter_user)
+                # use UserLookup to batch requests to avoid breaking Twitter API rate limit
+                users = api.UsersLookup(screen_name=screen_names)
+            except twitter.TwitterError:
+                return Response("Invalid Twitter username", 500)
 
-        return Response(TwitterUserSerializer(new_follows, many=True).data)
+            for u in users:
+                twitter_user = TwitterUser(u)
+
+                try:
+                    Follow.objects.get(screen_name=twitter_user.screen_name, user=request.user)
+                except Follow.DoesNotExist:
+                    # they are not already following this user, add them
+                    Follow.objects.create(screen_name=twitter_user.screen_name, user=request.user)
+                    twitter_graph.add_follow(twitter_user.screen_name, request.user)
+                    new_follows.append(twitter_user)
+
+            return Response(TwitterUserSerializer(new_follows, many=True).data)
+
+        return Response()
