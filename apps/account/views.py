@@ -58,7 +58,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     # convert to container Tweet object and identify newest Tweet
                     max_id = follow.last_id_seen
                     for t in timeline:
-                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at))
+                        tweets.append(Tweet(id=t.id, text=t.text, created_at=t.created_at, user_id=t.user.id))
                         if t.id > max_id:
                             max_id = t.id
 
@@ -113,7 +113,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         #         if t.user.screen_name not in suggested_users:
         #             suggested_users[t.user.screen_name] = TwitterUserSerializer(TwitterUser(t.user)).data
 
-        return Response(strs)
+        return Response(suggested_users)
 
     @list_route(methods=['GET'])
     def check_user(self, request):
