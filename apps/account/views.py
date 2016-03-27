@@ -4,6 +4,7 @@ from rest_framework.decorators import list_route
 from rest_framework import exceptions
 from .models import *
 from .feed import Tweet, TwitterUser, Feed
+from .graph import TwitterGraph
 from .serializers import *
 from django.conf import settings
 import twitter
@@ -14,6 +15,8 @@ api = twitter.Api(
             access_token_key=settings.ACCESS_TOKEN,
             access_token_secret=settings.ACCESS_SECRET
         )
+
+twitter_graph = TwitterGraph()
 
 
 class TokenViewSet(viewsets.ModelViewSet):
@@ -26,6 +29,7 @@ class TokenViewSet(viewsets.ModelViewSet):
         Method: POST
         Args: None
         '''
+        twitter_graph.add_user(request.user)
         return Response(TokenSerializer(request.user.token).data)
 
 
@@ -113,7 +117,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         #         if t.user.screen_name not in suggested_users:
         #             suggested_users[t.user.screen_name] = TwitterUserSerializer(TwitterUser(t.user)).data
 
-        return Response(strs)
+        return Response(suggested_users)
 
     @list_route(methods=['GET'])
     def check_user(self, request):
@@ -123,8 +127,14 @@ class FollowViewSet(viewsets.ModelViewSet):
         Args: string screen_name
         '''
         screen_name = request.GET.get('screen_name', None)
+
+        # check if we've already cached that TwitterUser in our graph
+        if twitter_graph.is_cached(screen_name):
+            return Response()
+
         try:
             api.GetUser(screen_name=screen_name)
+            twitter_graph.add_twitter_user(screen_name)
             return Response()
         except twitter.TwitterError:
             # not a valid twitter screen_name
@@ -136,11 +146,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         Method: POST
         Args: JSON object in following format
         {
-            "additions": [{
-                "screen_name": "{example_screen_name}"
-            }, {
-                "screen_name": "{example_screen_name_2}"
-            }]
+            "additions": ["screen_name_1", "screen_name_2"]
         }
         '''
         if 'additions' not in request.data:
@@ -163,6 +169,7 @@ class FollowViewSet(viewsets.ModelViewSet):
             except Follow.DoesNotExist:
                 # they are not already following this user, add them
                 Follow.objects.create(screen_name=twitter_user.screen_name, user=request.user)
+                twitter_graph.add_follow(twitter_user.screen_name, request.user.id)
                 new_follows.append(twitter_user)
 
         return Response(TwitterUserSerializer(new_follows, many=True).data)
