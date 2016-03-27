@@ -45,14 +45,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
         for follow in follows:
             try:
-                timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen, count=5)
+                if follow.last_id_seen is None:
+                    # first pull from timeline, include count instead of since_id
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, count=5)
+                else:
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
+
                 if len(timeline) > 0:
+                    max_id = follow.last_id_seen
                     for t in timeline:
                         tweets.append(Tweet(id=t.id, text=t.text))
+                        if t.id > follow.last_id_seen:
+                            max_id = t.id
 
                     # update follow object with new last tweet id that they've seen
-                    follow.last_id_seen = timeline[0].id
+                    follow.last_id_seen = max_id
                     follow.save()
+                    return Response(max_id)
             except twitter.TwitterError:
                 pass
 
@@ -89,7 +98,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         #         if t.user.screen_name not in suggested_users:
         #             suggested_users[t.user.screen_name] = TwitterUserSerializer(TwitterUser(t.user)).data
 
-        return Response(suggested_users)
+        return Response(strs)
 
     @list_route(methods=['GET'])
     def check_user(self, request):
@@ -98,7 +107,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         Method: GET
         Args: string screen_name
         '''
-        screen_name = request.data.get('screen_name', None)
+        screen_name = request.GET.get('screen_name', None)
         try:
             api.GetUser(screen_name=screen_name)
             return Response()
