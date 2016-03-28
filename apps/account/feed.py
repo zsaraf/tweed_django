@@ -1,3 +1,8 @@
+from .models import Follow
+from .utils import api, twitter_graph
+import twitter
+
+
 class TwitterUser(object):
     '''
     Container object to facilitate working with Twitter Users
@@ -53,17 +58,76 @@ class Feed(object):
     Container object to facilitate working with a feed comprised of Tweets from multiple TwitterUsers
     '''
 
-    def __init__(self):
+    def __init__(self, user):
+        self.user = user
         self.tweets = []
         self.twitter_users = []
+        self.follows = Follow.objects.filter(user=user)
+        screen_names = [f.screen_name for f in self.follows]
+        try:
+            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
+            self.twitter_users = [TwitterUser(u) for u in api.UsersLookup(screen_name=screen_names)]
 
-    def add_stream(self, stream):
-        if stream is not None:
-            self.tweets.extend(stream)
+        except twitter.TwitterError:
+            pass
 
-    def add_users(self, users):
-        if users is not None:
-            self.twitter_users.extend(users)
+    def load_new_tweets(self):
+        '''
+        loads Tweets newer than last_seen from Twitter API for the users contained in the Feed
+        '''
+        self.load_tweets(True)
+
+    def load_old_tweets(self):
+        '''
+        loads Tweets earlier than first_seen from Twitter API for the users contained in the Feed
+        '''
+        self.load_tweets(False)
+
+    def load_tweets(self, is_refresh):
+        '''
+        helper to load and process tweets into feed
+        '''
+
+        for follow in self.follows:
+            tweets = []
+            try:
+                if follow.last_id_seen is None and is_refresh:
+                    # first pull from timeline, include count instead of since_id
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, count=5)
+                elif is_refresh:
+                    # pulling new tweets from timeline
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
+                else:
+                    # pulling old tweets from timeline
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, max_id=follow.first_id_seen - 1, count=5)
+
+                if len(timeline) > 0:
+                    # convert to container Tweet object and identify newest and oldest Tweet
+                    max_id = follow.last_id_seen
+                    min_id = follow.first_id_seen if follow.first_id_seen is not None else timeline[0].id
+                    for t in timeline:
+                        tweet_obj = Tweet(t)
+                        if tweet_obj.original_tweet is not None:
+                            twitter_graph.add_retweet(t.user.screen_name, tweet_obj.original_tweet.user.screen_name)
+                        tweets.append(tweet_obj)
+                        if t.id > max_id:
+                            max_id = t.id
+                        if t.id < min_id:
+                            min_id = t.id
+
+                    # add this TwitterUsers twitter stream to feed object
+                    self.tweets.extend(tweets)
+
+                    # update follow object with new last tweet id that they've seen
+                    follow.last_id_seen = max_id
+                    follow.first_id_seen = min_id
+                    follow.save()
+            except twitter.TwitterError:
+                pass
 
     def merge_streams(self):
+        '''
+        sorts the Tweets into reverse chronological order
+        '''
         self.tweets.sort(key=lambda t: t.id, reverse=True)
+

@@ -4,19 +4,9 @@ from rest_framework.decorators import list_route
 from rest_framework import exceptions
 from .models import *
 from .feed import Tweet, TwitterUser, Feed
-from .graph import TwitterGraph
 from .serializers import *
-from django.conf import settings
+from .utils import api, twitter_graph
 import twitter
-
-api = twitter.Api(
-            consumer_key=settings.CONSUMER_KEY,
-            consumer_secret=settings.CONSUMER_SECRET,
-            access_token_key=settings.ACCESS_TOKEN,
-            access_token_secret=settings.ACCESS_SECRET
-        )
-
-twitter_graph = TwitterGraph()
 
 
 class TokenViewSet(viewsets.ModelViewSet):
@@ -38,55 +28,33 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     @list_route(methods=['POST'])
+    def load_more(self, request):
+        '''
+        Load older data for user, only Tweet objects linked to their followees
+        Mothod: POST
+        Args: None
+        '''
+        # initialize feed object with user's data
+        feed = Feed(request.user)
+
+        feed.load_old_tweets()
+        feed.merge_streams()
+
+        return Response(FeedSerializer(feed).data)
+
+    @list_route(methods=['POST'])
     def refresh(self, request):
         '''
         Refresh data for user, including TwitterUser and Tweet objects linked to their followees
         Method: POST
         Args: None
         '''
-        follows = Follow.objects.filter(user=request.user)
-        screen_names = []
-        feed = Feed()
+        # initialize feed object with user's data
+        feed = Feed(request.user)
 
-        for follow in follows:
-            tweets = []
-            screen_names.append(follow.screen_name)
-            try:
-                if follow.last_id_seen is None:
-                    # first pull from timeline, include count instead of since_id
-                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, count=5)
-                else:
-                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
-
-                if len(timeline) > 0:
-                    # convert to container Tweet object and identify newest Tweet
-                    max_id = follow.last_id_seen
-                    for t in timeline:
-                        tweet_obj = Tweet(t)
-                        if tweet_obj.original_tweet is not None:
-                            twitter_graph.add_retweet(t.user.screen_name, tweet_obj.original_tweet.user.screen_name)
-                        tweets.append(tweet_obj)
-                        if t.id > max_id:
-                            max_id = t.id
-
-                    # add this TwitterUsers twitter stream to feed object
-                    feed.add_stream(tweets)
-
-                    # update follow object with new last tweet id that they've seen
-                    follow.last_id_seen = max_id
-                    follow.save()
-            except twitter.TwitterError:
-                pass
-
-        try:
-            # use UserLookup to batch requests to avoid breaking Twitter API rate limit
-            users = [TwitterUser(u) for u in api.UsersLookup(screen_name=screen_names)]
-            feed.add_users(users)
-
-        except twitter.TwitterError:
-            feed.add_users(None)
-
+        feed.load_new_tweets()
         feed.merge_streams()
+
         return Response(FeedSerializer(feed).data)
 
 

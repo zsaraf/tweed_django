@@ -25,6 +25,7 @@ class Follow(models.Model):
     user = models.ForeignKey(User)
     screen_name = models.CharField(max_length=20)
     last_id_seen = models.BigIntegerField(blank=True, null=True)
+    first_id_seen = models.BigIntegerField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
