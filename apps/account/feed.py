@@ -39,7 +39,19 @@ class Tweet(object):
         self.text = api_object.text
         self.created_at = api_object.created_at
         self.user_id = api_object.user.id
+        self.media = self.parse_media(api_object.AsDict())
+        self.mentions = self.parse_mentions(api_object.AsDict())
+        self.urls = self.parse_urls(api_object.AsDict())
         self.original_tweet = self.parse_retweet(api_object.retweeted_status)
+    
+    def parse_media(self, dict):
+        return dict.get('media', None)
+    
+    def parse_urls(self, dict):
+        return dict.get('urls', None)
+
+    def parse_mentions(self, dict):
+        return dict.get('user_mentions', None)
 
     def parse_retweet(self, retweet):
         if retweet is None:

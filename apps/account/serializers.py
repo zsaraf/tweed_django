@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-
+import json
 
 class TokenSerializer(serializers.ModelSerializer):
 
@@ -48,7 +48,19 @@ class TweetSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     text = serializers.CharField(max_length=141)
     created_at = serializers.CharField(max_length=100)
+    media = serializers.SerializerMethodField()
     original_tweet = OriginalTweetSerializer()
+    mentions = serializers.SerializerMethodField()
+    urls = serializers.SerializerMethodField()
+    
+    def get_media(self, object):
+        return object.media
+
+    def get_urls(self, object):
+        return object.urls
+
+    def get_mentions(self, object):
+        return object.mentions
 
 
 class FeedSerializer(serializers.Serializer):
