@@ -1,6 +1,7 @@
 from .models import Follow
 from .utils import api, twitter_graph
 import twitter
+import heapq
 
 
 class TwitterUser(object):
@@ -44,6 +45,7 @@ class Tweet(object):
         self.text = api_object.text
         self.created_at = api_object.created_at
         self.user_id = api_object.user.id
+        self.user_screen_name = api_object.user.screen_name
         self.media = self.parse_media(api_object.AsDict())
         self.mentions = self.parse_mentions(api_object.AsDict())
         self.urls = self.parse_urls(api_object.AsDict())
@@ -72,6 +74,8 @@ class Feed(object):
 
     def __init__(self, user):
         self.user = user
+        self.heap = []
+        self.lowest_tweet_id = {}
         self.tweets = []
         self.twitter_users = []
         self.follows = Follow.objects.filter(user=user)
@@ -101,11 +105,10 @@ class Feed(object):
         '''
 
         for follow in self.follows:
-            tweets = []
             try:
                 if follow.last_id_seen is None and is_refresh:
                     # first pull from timeline, include count instead of since_id
-                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, count=5)
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name)
                 elif is_refresh:
                     # pulling new tweets from timeline
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
@@ -115,25 +118,19 @@ class Feed(object):
 
                 if len(timeline) > 0:
                     # convert to container Tweet object and identify newest and oldest Tweet
-                    max_id = follow.last_id_seen
                     min_id = timeline[0].id
-                    for t in timeline:
-                        tweet_obj = Tweet(t)
+                    for index in xrange(len(timeline)):
+                        tweet_obj = Tweet(timeline[index])
                         if tweet_obj.original_tweet is not None:
-                            twitter_graph.add_retweet(t.user.screen_name, tweet_obj.original_tweet.user.screen_name)
-                        tweets.append(tweet_obj)
-                        if t.id > max_id:
-                            max_id = t.id
-                        if t.id < min_id:
-                            min_id = t.id
+                            twitter_graph.add_retweet(timeline[index].user.screen_name, tweet_obj.original_tweet.user.screen_name)
+                        if tweet_obj.id < min_id:
+                            min_id = tweet_obj.id
 
-                    # add this TwitterUsers twitter stream to feed object
-                    self.tweets.extend(tweets)
+                        heapq.heappush(self.heap, (-1*tweet_obj.id, tweet_obj))
 
-                    # update follow object with new last tweet id that they've seen
-                    follow.last_id_seen = max_id
-                    follow.first_id_seen = min_id
-                    follow.save()
+                    # store minimum tweet id in the dataset for each user so we can tell when we've exhausted the stream
+                    self.lowest_tweet_id[follow.screen_name] = min_id
+
             except twitter.TwitterError:
                 pass
 
@@ -141,5 +138,26 @@ class Feed(object):
         '''
         sorts the Tweets into reverse chronological order
         '''
-        self.tweets.sort(key=lambda t: t.id, reverse=True)
+        min_ids = {}
+        max_ids = {}
+
+        while self.heap:
+            (tweet_id, tweet) = heapq.heappop(self.heap)
+            self.tweets.append(tweet)
+            if tweet.user_screen_name not in max_ids:
+                max_ids[tweet.user_screen_name] = tweet.id
+
+            min_ids[tweet.user_screen_name] = tweet.id
+            if tweet.id == self.lowest_tweet_id[tweet.user_screen_name]:
+                # reached the end of this data stream, stop iterating to avoid chronology errors
+                break
+
+        for f in self.follows:
+            # only alter follow data if we pulled a tweet from that stream before exhausting another
+            if f.screen_name in max_ids and (f.last_id_seen is None or f.last_id_seen < max_ids[f.screen_name]):
+                f.last_id_seen = max_ids[f.screen_name]
+            if f.screen_name in min_ids and (f.first_id_seen is None or f.first_id_seen > min_ids[f.screen_name]):
+                f.first_id_seen = min_ids[f.screen_name]
+            f.save()
+
 
