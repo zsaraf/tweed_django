@@ -69,7 +69,14 @@ class FollowViewSet(viewsets.ModelViewSet):
         Method: GET
         Args: none
         '''
-        screen_names = twitter_graph.get_generic_recommendations()
+
+        if Follow.objects.filter(user=request.user).count() == 0:
+            # non-personalized recommendations based on overall popularity in our network
+            screen_names = twitter_graph.get_generic_recommendations()
+
+        else:
+            # personalized recommendations based on the Retweets of TwitterUsers that you follow
+            screen_names = twitter_graph.get_RT_recommendations(request.user)
 
         suggested_users = []
         try:

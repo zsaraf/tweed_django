@@ -1,4 +1,5 @@
 from py2neo import Graph, Node, Relationship
+from collections import Counter
 import heapq
 
 
@@ -11,12 +12,24 @@ class TwitterGraph():
 
     def add_user(self, user):
         new_user = Node("User", token=user.token.session_id, user_id=user.id)
-        return self.graph.create_unique(new_user)
+        return self.graph.create(new_user)
 
     def is_cached(self, screen_name):
         twitter_user = self.graph.find_one("TwitterUser", 'screen_name', screen_name)
         if twitter_user is not None:
             return True
+
+    def get_RT_recommendations(self, user):
+        recommendations = Counter()
+        user_node = self.graph.find_one("User", 'user_id', user.id)
+        following = user_node.match_outgoing("FOLLOWS", limit=5)
+
+        for rel in following:
+            retweets = rel.end_node.match_outgoing("RETWEETED", limit=5)
+            for r in retweets:
+                recommendations[r.end_node.properties['screen_name']] += 1
+
+        return [str for (str, count) in recommendations.most_common(10)]
 
     def get_generic_recommendations(self):
         return [screen_name for (count, screen_name) in heapq.nlargest(10, self.popularity_heap)]
@@ -29,8 +42,10 @@ class TwitterGraph():
             heapq.heappush(self.popularity_heap, (incoming_count, tu.properties['screen_name']))
 
     def add_twitter_user(self, screen_name):
-        new_twitter_user = Node("TwitterUser", screen_name=screen_name)
-        return self.graph.create_unique(new_twitter_user)
+        twitter_user = self.graph.find_one("TwitterUser", 'screen_name', screen_name)
+        if twitter_user is None:
+            new_twitter_user = Node("TwitterUser", screen_name=screen_name)
+            self.graph.create(new_twitter_user)
 
     def add_follow(self, screen_name, user):
         user_node = self.graph.find_one("User", 'user_id', user.id)
