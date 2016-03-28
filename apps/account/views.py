@@ -82,6 +82,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         try:
             # use UserLookup to batch requests to avoid breaking Twitter API rate limit
             users = api.UsersLookup(screen_name=screen_names)
+
             for u in users:
                 suggested_users.append(TwitterUserSerializer(TwitterUser(u)).data)
 
