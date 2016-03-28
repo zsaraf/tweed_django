@@ -48,10 +48,10 @@ class Tweet(object):
         self.mentions = self.parse_mentions(api_object.AsDict())
         self.urls = self.parse_urls(api_object.AsDict())
         self.original_tweet = self.parse_retweet(api_object.retweeted_status)
-    
+
     def parse_media(self, dict):
         return dict.get('media', None)
-    
+
     def parse_urls(self, dict):
         return dict.get('urls', None)
 
@@ -111,12 +111,12 @@ class Feed(object):
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
                 else:
                     # pulling old tweets from timeline
-                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, max_id=follow.first_id_seen - 1, count=5)
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, max_id=follow.first_id_seen - 1)
 
                 if len(timeline) > 0:
                     # convert to container Tweet object and identify newest and oldest Tweet
                     max_id = follow.last_id_seen
-                    min_id = follow.first_id_seen if follow.first_id_seen is not None else timeline[0].id
+                    min_id = timeline[0].id
                     for t in timeline:
                         tweet_obj = Tweet(t)
                         if tweet_obj.original_tweet is not None:
