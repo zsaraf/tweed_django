@@ -103,12 +103,22 @@ class Feed(object):
         '''
         helper to load and process tweets into feed
         '''
+        # this should be stored as a global in on the user object, but caught the bug too late
+        global_min = None
+        for follow in self.follows:
+            if follow.first_id_seen is not None and global_min is None:
+                global_min = follow.first_id_seen
+            elif follow.first_id_seen is not None and global_min > follow.first_id_seen:
+                global_min = follow.first_id_seen
 
         for follow in self.follows:
             try:
-                if follow.last_id_seen is None:
-                    # first pull from timeline, include count instead of since_id
+                if follow.last_id_seen is None and global_min is None:
+                    # first pull from timeline all together, don't need since_id
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name)
+                elif follow.last_id_seen is None:
+                    # first pull from timeline for this user, but not globally - get since global_min
+                    timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=global_min, count=80)
                 elif is_refresh:
                     # pulling new tweets from timeline
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name, since_id=follow.last_id_seen)
