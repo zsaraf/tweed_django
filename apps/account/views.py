@@ -80,14 +80,16 @@ class FollowViewSet(viewsets.ModelViewSet):
 
         suggested_users = []
         try:
+            if not screen_names:
+                screen_names = ["BarackObama", "taylorswift13", "CNN", "espn", "gofundme", "TechCrunch", "tim_cook", "YouTube", "AdamSchefter", "Beyonce", "seshtutoring"]
             # use UserLookup to batch requests to avoid breaking Twitter API rate limit
             users = api.UsersLookup(screen_name=screen_names)
 
             for u in users:
                 suggested_users.append(TwitterUserSerializer(TwitterUser(u)).data)
 
-        except twitter.TwitterError:
-            return Response("We're experiencing difficulties, please try again later!", 500)
+        except twitter.TwitterError, e:
+            return Response(e)
 
         return Response(suggested_users)
 
