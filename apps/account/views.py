@@ -69,8 +69,9 @@ class FollowViewSet(viewsets.ModelViewSet):
         Method: GET
         Args: none
         '''
+        screen_names = twitter_graph.get_generic_recommendations()
+
         suggested_users = []
-        screen_names = ['taylorswift13', 'justinbieber', 'tim_cook', 'BarackObama', 'YouTube', 'rihanna', 'TheEllenShow', 'KimKardashian', 'Cristiano', 'cnnbrk', 'Oprah']
         try:
             # use UserLookup to batch requests to avoid breaking Twitter API rate limit
             users = api.UsersLookup(screen_name=screen_names)
@@ -79,14 +80,6 @@ class FollowViewSet(viewsets.ModelViewSet):
 
         except twitter.TwitterError:
             return Response("We're experiencing difficulties, please try again later!", 500)
-
-        # trends = api.GetTrendsWoeid(23424977)
-        # for i in xrange(min(5, len(trends))):
-        #     trend = trends[i]
-        #     trending_tweets = api.GetSearch(term=trend.name, lang='en', result_type='popular')
-        #     for t in trending_tweets:
-        #         if t.user.screen_name not in suggested_users:
-        #             suggested_users[t.user.screen_name] = TwitterUserSerializer(TwitterUser(t.user)).data
 
         return Response(suggested_users)
 

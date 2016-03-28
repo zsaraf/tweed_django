@@ -106,7 +106,7 @@ class Feed(object):
 
         for follow in self.follows:
             try:
-                if follow.last_id_seen is None and is_refresh:
+                if follow.last_id_seen is None:
                     # first pull from timeline, include count instead of since_id
                     timeline = api.GetUserTimeline(screen_name=follow.screen_name)
                 elif is_refresh:
@@ -136,7 +136,7 @@ class Feed(object):
 
     def merge_streams(self):
         '''
-        sorts the Tweets into reverse chronological order
+        piece-wise merges tweets from multiple users maintaining chronology
         '''
         min_ids = {}
         max_ids = {}
