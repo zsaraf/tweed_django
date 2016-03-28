@@ -27,7 +27,7 @@ class TwitterUserSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=141)
     screen_name = serializers.CharField(max_length=20)
     profile_image = serializers.CharField(max_length=250)
-    profile_background_image = serializers.CharField(max_length=250)
+    profile_banner = serializers.CharField(max_length=250)
     followers_count = serializers.IntegerField()
     following_count = serializers.IntegerField()
     tweets_count = serializers.IntegerField()

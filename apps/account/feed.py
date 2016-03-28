@@ -8,7 +8,7 @@ class TwitterUser(object):
         self.name = full_api_object.name
         self.screen_name = full_api_object.screen_name
         self.profile_image = full_api_object.profile_image_url
-        self.profile_background_image = full_api_object.profile_background_image_url
+        self.profile_banner = full_api_object.profile_banner_url
         self.followers_count = full_api_object.followers_count
         self.following_count = full_api_object.friends_count
         self.tweets_count = full_api_object.statuses_count
